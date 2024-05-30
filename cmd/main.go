@@ -6,17 +6,13 @@ import (
 
 	"github.com/FrostJ143/simplebank/internal/api"
 	"github.com/FrostJ143/simplebank/internal/query"
+	"github.com/FrostJ143/simplebank/internal/utils"
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbDriver = "postgres"
-	dbSource = "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable"
-	address  = "localhost:8080"
-)
-
 func main() {
-	conn, err := sql.Open(dbDriver, dbSource)
+	config, err := utils.LoadConfig(".")
+	conn, err := sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		log.Fatal("Could not connect to database: ", err)
 	}
@@ -24,7 +20,7 @@ func main() {
 	store := query.NewStore(conn)
 	server := api.NewServer(store)
 
-	err = server.Start(address)
+	err = server.Start(config.ServerAddress)
 	if err != nil {
 		log.Fatal("Could not start server")
 	}
