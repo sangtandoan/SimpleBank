@@ -16,5 +16,8 @@ migratedown:
 test:
 	go test -v ./...
 
+server:
+	go run ./cmd/main.go
 
-.PHONY: createdb dropdb postgres migrateup migratedown test
+
+.PHONY: createdb dropdb postgres migrateup migratedown test server
