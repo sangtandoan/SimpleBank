@@ -16,8 +16,19 @@ migratedown:
 test:
 	go test -v ./...
 
+testcover:
+	go test ./... -coverprofile=c.out -covermode=count
+
+coverhtml:
+	go tool cover -html=c.out
+
+
+
 server:
 	go run ./cmd/main.go
 
+mock: 
+	~/go/bin/mockgen -package mockdb -destination internal/mock/store.go github.com/FrostJ143/simplebank/internal/query Store
 
-.PHONY: createdb dropdb postgres migrateup migratedown test server
+
+.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml
