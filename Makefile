@@ -9,9 +9,17 @@ dropdb:
 
 migrateup:
 	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
+
+# migrate up 1 version
+migrateup1:
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
 	
 migratedown:
 	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+
+# migrate down 1 version
+migratedown1:
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
 
 test:
 	go test -v ./...
@@ -31,4 +39,4 @@ mock:
 	~/go/bin/mockgen -package mockdb -destination internal/mock/store.go github.com/FrostJ143/simplebank/internal/query Store
 
 
-.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml
+.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml migrateup1 migratedown1
