@@ -2,15 +2,16 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/FrostJ143/simplebank/internal/query"
+	"github.com/FrostJ143/simplebank/internal/token"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 )
 
 type createAccountRequest struct {
-	Owner    string `json:"owner"    binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
@@ -22,8 +23,10 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+
 	arg := query.CreateAccountParams{
-		Owner:    req.Owner,
+		Owner:    authPayload.Username,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -67,6 +70,13 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err := errors.New("account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusForbidden, errResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, account)
 }
 
@@ -82,7 +92,10 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errResponse(err))
 	}
 
+	authPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+
 	arg := query.ListAccountsParams{
+		Owner:  authPayload.Username,
 		Limit:  req.PageSize,
 		Offset: req.PageSize * (req.PageID - 1),
 	}
@@ -156,6 +169,24 @@ func (server *Server) deleteAccount(ctx *gin.Context) {
 	err := ctx.ShouldBindUri(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errResponse(err))
+		return
+	}
+
+	account, err := server.store.GetAccount(ctx, req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusBadRequest, errResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err := errors.New("account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusForbidden, errResponse(err))
 		return
 	}
 
