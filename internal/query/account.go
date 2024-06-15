@@ -62,7 +62,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 	query := `SELECT id, owner, balance, currency, created_at FROM accounts WHERE owner = $1
             ORDER BY id LIMIT $2 OFFSET $3`
 
-	rows, err := q.db.QueryContext(ctx, query, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, query, arg.Owner, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
