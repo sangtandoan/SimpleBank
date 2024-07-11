@@ -21,6 +21,9 @@ migratedown:
 migratedown1:
 	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
 
+# createmigrate:
+# 	migrate create -ext sql -dir db/migrate <name_of_migrate>
+
 test:
 	go test -v ./...
 
@@ -29,8 +32,6 @@ testcover:
 
 coverhtml:
 	go tool cover -html=c.out
-
-
 
 server:
 	go run ./cmd/main.go

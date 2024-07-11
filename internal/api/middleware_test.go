@@ -20,8 +20,9 @@ func addAuth(
 	username string,
 	duration time.Duration,
 ) {
-	accessToken, err := tokenMaker.CreateToken(username, duration)
+	accessToken, payload, err := tokenMaker.CreateToken(username, duration)
 	require.NoError(t, err)
+	require.NotEmpty(t, payload)
 
 	authHeader := fmt.Sprintf("%s %s", authType, accessToken)
 	req.Header.Set(autHeaderKey, authHeader)

@@ -1,6 +1,10 @@
 package query
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type Querier interface {
 	AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (*Account, error)
@@ -17,4 +21,6 @@ type Querier interface {
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*Account, error)
 	GetUser(ctx context.Context, name string) (*User, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) (*Session, error)
+	GetSession(ctx context.Context, id uuid.UUID) (*Session, error)
 }
