@@ -39,5 +39,13 @@ server:
 mock: 
 	~/go/bin/mockgen -package mockdb -destination internal/mock/store.go github.com/FrostJ143/simplebank/internal/query Store
 
+proto:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+    --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+    proto/*.proto
 
-.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml migrateup1 migratedown1
+evans:
+	evans --host 0.0.0.0 --port 9090 --proto proto/service_simple_bank.proto repl
+
+.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml migrateup1 migratedown1 proto evans

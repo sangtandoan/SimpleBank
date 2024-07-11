@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/FrostJ143/simplebank/pb";
+
+
+message CreateUserRequest {
+    string username = 1;
+    string password = 2;
+    string fullname = 3;
+    string email = 4;
+}
+
+message CreateUserResponse {
+    string username = 1;
+    string fullname = 2;
+    string email = 3;
+    google.protobuf.Timestamp password_changed_at = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message LoginUserRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LoginUserResponse {
+    string username = 1;
+    string fullname = 2;
+    string session_id = 3;
+    string access_token = 4;
+    string refresh_token = 5;
+    google.protobuf.Timestamp access_token_expires_at = 6;
+    google.protobuf.Timestamp refresh_token_expires_at = 7;
+}
+
+message SumRequest {
+    int32 num1 = 1;
+    int32 num2 = 2;
+}
+
+message SumResponse {
+    int32 result = 1;
+}
+
+service SimpleBank {
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse) {}
+    rpc Sum (SumRequest) returns (SumResponse) {}
+}
