@@ -20,11 +20,11 @@ type createUserRequest struct {
 }
 
 type UserResponse struct {
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	CreatedAt         time.Time `json:"created_at"`
 	Username          string    `json:"username"`
 	Fullname          string    `json:"fullname"`
 	Email             string    `json:"email"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	CreatedAt         time.Time `json:"created_at"`
 }
 
 func newUserResponse(user *query.User) *UserResponse {
@@ -83,12 +83,12 @@ type loginUserRequest struct {
 }
 
 type loginUserResponse struct {
-	SessionID             uuid.UUID `json:"session_id"`
-	AccessToken           string    `json:"access_token"`
 	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
-	RefreshToken          string    `json:"refresh_token"`
 	RefrestTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
 	User                  *UserResponse
+	AccessToken           string    `json:"access_token"`
+	RefreshToken          string    `json:"refresh_token"`
+	SessionID             uuid.UUID `json:"session_id"`
 }
 
 func (server *Server) loginUser(ctx *gin.Context) {

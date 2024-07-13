@@ -13,8 +13,8 @@ import (
 type Server struct {
 	pb.UnimplementedSimpleBankServer
 	store      query.Store
-	config     utils.Config
 	tokenMaker token.Maker
+	config     utils.Config
 }
 
 func NewServer(store query.Store, config utils.Config) (*Server, error) {

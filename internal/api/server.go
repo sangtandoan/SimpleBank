@@ -14,9 +14,9 @@ import (
 
 type Server struct {
 	store      query.Store
+	tokenMaker token.Maker
 	router     *gin.Engine
 	config     utils.Config
-	tokenMaker token.Maker
 }
 
 func NewServer(store query.Store, config utils.Config) (*Server, error) {

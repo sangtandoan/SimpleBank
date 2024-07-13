@@ -62,5 +62,4 @@ func runGinServer(store query.Store, config utils.Config) {
 	if err != nil {
 		log.Fatal("Could not start server")
 	}
-
 }
