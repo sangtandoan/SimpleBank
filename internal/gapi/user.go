@@ -3,8 +3,6 @@ package gapi
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"os"
 
 	"github.com/FrostJ143/simplebank/internal/query"
 	"github.com/FrostJ143/simplebank/internal/utils"
@@ -52,7 +50,6 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 }
 
 func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
-	fmt.Println(os.Getwd())
 	user, err := server.store.GetUser(ctx, req.GetUsername())
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -83,15 +80,13 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 		return nil, status.Errorf(codes.Internal, "failed to create refresh token: %s", err)
 	}
 
-	mtdt := server.extractMetadata(ctx)
-
 	id := uuid.UUID([]byte(refreshTokenPayload.ID))
 	session, err := server.store.CreateSession(ctx, query.CreateSessionParams{
 		ID:           id,
 		Username:     refreshTokenPayload.Username,
 		RefrestToken: refreshToken,
-		UserAgent:    mtdt.UserAgent,
-		ClientIP:     mtdt.ClientIP,
+		UserAgent:    "",
+		ClientIP:     "",
 		IsBlocked:    false,
 		ExpiresAt:    refreshTokenPayload.ExpiresAt.Time,
 	})

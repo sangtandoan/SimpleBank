@@ -1,6 +1,7 @@
 package gapi
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/FrostJ143/simplebank/internal/query"
@@ -25,4 +26,11 @@ func NewServer(store query.Store, config utils.Config) (*Server, error) {
 	server := Server{store: store, config: config, tokenMaker: tokenMaker}
 
 	return &server, nil
+}
+
+func (server *Server) Sum(ctx context.Context, req *pb.SumRequest) (*pb.SumResponse, error) {
+	result := req.GetNum1() + req.GetNum2()
+	res := &pb.SumResponse{Result: result}
+
+	return res, nil
 }
