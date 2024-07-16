@@ -10,9 +10,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var testQueries *Queries
-var testDB *sql.DB
-var testStore Store
+var (
+	testQueries *Queries
+	testDB      *sql.DB
+	testStore   Store
+)
 
 func TestMain(m *testing.M) {
 	config, err := utils.LoadConfig("./../..")

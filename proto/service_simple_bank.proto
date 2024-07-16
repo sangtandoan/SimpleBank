@@ -38,17 +38,39 @@ message LoginUserResponse {
     google.protobuf.Timestamp refresh_token_expires_at = 7;
 }
 
+message UpdateUserRequest {
+    string username = 1;
+    optional string password = 2;
+    optional string fullname = 3;
+    optional string email = 4;
+}
+
+message UpdateUserResponse {
+    string username = 1;
+    string fullname = 2;
+    string email = 3;
+    google.protobuf.Timestamp password_changed_at = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
 service SimpleBank {
     rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
         option (google.api.http) = {
           post: "/v1/create_user"
           body: "*"
         };
-      }
+    }
     rpc LoginUser (LoginUserRequest) returns (LoginUserResponse) {
         option (google.api.http) = {
             post: "/v1/login_user"
             body: "*"
-          };
-      }
+        };
+    }
+    
+    rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {
+        option (google.api.http) = {
+                patch: "/v1/update_user"
+                body: "*"
+        };
+    }
 }

@@ -1,6 +1,9 @@
 package query
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type CreateUserParams struct {
 	Username       string `json:"username"`
@@ -53,6 +56,34 @@ func (q *Queries) GetUser(ctx context.Context, username string) (*User, error) {
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &i, nil
+}
+
+type UpdateUserParams struct {
+	PasswordChangedAt sql.NullTime   `json:"password_changed_at"`
+	Username          string         `json:"username"`
+	Fullname          sql.NullString `json:"fullname"`
+	HashedPassword    sql.NullString `json:"hashed_password"`
+	Email             sql.NullString `json:"email"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
+	query := `UPDATE users SET
+                fullname = COALESCE($1, fullname),
+                hashed_password = COALESCE($2, hashed_password),
+                email = COALESCE($3, email),
+                password_changed_at = COALESCE($4, password_changed_at)
+                WHERE username = $5
+                RETURNING username, fullname, hashed_password, email, password_changed_at, created_at`
+
+	row := q.db.QueryRowContext(ctx, query, arg.Fullname, arg.HashedPassword, arg.Email, arg.PasswordChangedAt, arg.Username)
+
+	var i User
+	err := row.Scan(&i.Username, &i.Fullname, &i.HashedPassword, &i.Email, &i.PasswordChangedAt, &i.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
