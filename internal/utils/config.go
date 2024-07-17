@@ -15,6 +15,7 @@ type Config struct {
 	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	TokenSymKey          string        `mapstructure:"TOKEN_SYM_KEY"`
+	Environment          string        `mapstructure:"ENVIRONMENT"`
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
