@@ -53,6 +53,15 @@ message UpdateUserResponse {
     google.protobuf.Timestamp created_at = 5;
 }
 
+message VerifyEmailRequest {
+    int64 id = 1;
+    string secret_code = 2;
+}
+
+message VerifyEmailResponse {
+    bool is_verified = 1;
+}
+
 service SimpleBank {
     rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
         option (google.api.http) = {
@@ -73,4 +82,10 @@ service SimpleBank {
                 body: "*"
         };
     }
+
+    rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {
+        option (google.api.http) = {
+            get: "/v1/verify_email"
+        };
+    } 
 }

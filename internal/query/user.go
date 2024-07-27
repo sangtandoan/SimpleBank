@@ -69,6 +69,7 @@ type UpdateUserParams struct {
 	Fullname          sql.NullString `json:"fullname"`
 	HashedPassword    sql.NullString `json:"hashed_password"`
 	Email             sql.NullString `json:"email"`
+	IsEmailVerified   sql.NullBool   `json:"is_email_verified"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error) {
@@ -76,14 +77,15 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, 
                 fullname = COALESCE($1, fullname),
                 hashed_password = COALESCE($2, hashed_password),
                 email = COALESCE($3, email),
-                password_changed_at = COALESCE($4, password_changed_at)
+                password_changed_at = COALESCE($4, password_changed_at),
+                is_email_verified = COALESCE($6, is_email_verified)
                 WHERE username = $5
-                RETURNING username, fullname, hashed_password, email, password_changed_at, created_at`
+                RETURNING username, fullname, hashed_password, email, password_changed_at, created_at, is_email_verified`
 
-	row := q.db.QueryRowContext(ctx, query, arg.Fullname, arg.HashedPassword, arg.Email, arg.PasswordChangedAt, arg.Username)
+	row := q.db.QueryRowContext(ctx, query, arg.Fullname, arg.HashedPassword, arg.Email, arg.PasswordChangedAt, arg.Username, arg.IsEmailVerified)
 
 	var i User
-	err := row.Scan(&i.Username, &i.Fullname, &i.HashedPassword, &i.Email, &i.PasswordChangedAt, &i.CreatedAt)
+	err := row.Scan(&i.Username, &i.Fullname, &i.HashedPassword, &i.Email, &i.PasswordChangedAt, &i.CreatedAt, &i.IsEmailVerified)
 	if err != nil {
 		return nil, err
 	}

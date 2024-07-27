@@ -17,6 +17,9 @@ type Config struct {
 	TokenSymKey          string        `mapstructure:"TOKEN_SYM_KEY"`
 	Environment          string        `mapstructure:"ENVIRONMENT"`
 	RedisServerAddress   string        `mapstructure:"REDIS_SERVER_ADDRESS"`
+	EmailSenderName      string        `mapstructure:"EMAIL_SENDER_NAME"`
+	EmailSenderAddress   string        `mapstructure:"EMAIL_SENDER_ADDRESS"`
+	EmailSenderPasswrod  string        `mapstructure:"EMAIL_SENDER_PASSWORD"`
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }

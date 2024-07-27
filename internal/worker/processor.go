@@ -3,8 +3,10 @@ package worker
 import (
 	"context"
 
+	"github.com/FrostJ143/simplebank/internal/email"
 	"github.com/FrostJ143/simplebank/internal/query"
 	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -18,21 +20,28 @@ type TaskProcessor interface {
 }
 
 type RedisTaskProcessor struct {
-	server *asynq.Server
-	store  query.Store
+	server     *asynq.Server
+	store      query.Store
+	mailSender email.EmailSender
 }
 
-func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store query.Store) TaskProcessor {
+func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store query.Store, mailSender email.EmailSender) TaskProcessor {
 	server := asynq.NewServer(redisOpt, asynq.Config{
 		Queues: map[string]int{
 			QueueCritical: 10,
 			QueueDefault:  5,
 		},
+		ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+			log.Error().Err(err).Str("type", task.Type()).
+				Bytes("payload", task.Payload()).Msg("processed task failed")
+		}),
+		Logger: NewLogger(),
 	})
 
 	return &RedisTaskProcessor{
-		server: server,
-		store:  store,
+		server:     server,
+		store:      store,
+		mailSender: mailSender,
 	}
 }
 

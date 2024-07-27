@@ -24,4 +24,6 @@ type Querier interface {
 	CreateSession(ctx context.Context, arg CreateSessionParams) (*Session, error)
 	GetSession(ctx context.Context, id uuid.UUID) (*Session, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, error)
+	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (*VerifyEmail, error)
+	UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (*VerifyEmail, error)
 }

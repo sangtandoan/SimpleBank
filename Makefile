@@ -43,6 +43,7 @@ proto:
 	export PATH="$$PATH:$$(go env GOPATH)/bin"
 	rm -f pb/*.go
 	rm -f doc/swagger/*.swagger.json
+	rm -rf doc/statik
 	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
 		--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
@@ -56,4 +57,7 @@ evans:
 redis:
 	docker run --name redis -p 6379:6379 -d redis:7.4-rc-alpine
 
-.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml migrateup1 migratedown1 proto evans redis
+create_migrate:
+	migrate create -ext sql -dir db/migrate -seq $(name)
+
+.PHONY: createdb dropdb postgres migrateup migratedown test server mock testcover coverhtml migrateup1 migratedown1 proto evans redis create_migrate

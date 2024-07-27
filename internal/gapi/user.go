@@ -37,7 +37,21 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		Email:          req.GetEmail(),
 	}
 
-	user, err := server.store.CreateUser(ctx, arg)
+	txResult, err := server.store.CreateUserTx(ctx, query.CreateUserTxParams{
+		CreateUserParams: arg,
+		AfterCreate: func(user *query.User) error {
+			taskPayload := worker.SendVerifyEmailPayload{
+				Username: user.Username,
+			}
+			opts := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(10 * time.Second),
+				asynq.Queue(worker.QueueCritical),
+			}
+			err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, &taskPayload, opts...)
+			return err
+		},
+	})
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
@@ -48,26 +62,12 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	// TODO: send verify email, run db transaction
-	taskPayload := worker.SendVerifyEmailPayload{
-		Username: user.Username,
-	}
-	opts := []asynq.Option{
-		asynq.MaxRetry(10),
-		asynq.ProcessIn(10 * time.Second),
-		asynq.Queue(worker.QueueCritical),
-	}
-	err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, &taskPayload, opts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email: %s", err)
-	}
-
 	res := &pb.CreateUserResponse{
-		Username:          user.Username,
-		Fullname:          user.Fullname,
-		Email:             user.Email,
-		PasswordChangedAt: timestamppb.New(user.PasswordChangedAt),
-		CreatedAt:         timestamppb.New(user.CreatedAt),
+		Username:          txResult.User.Username,
+		Fullname:          txResult.User.Fullname,
+		Email:             txResult.User.Email,
+		PasswordChangedAt: timestamppb.New(txResult.User.PasswordChangedAt),
+		CreatedAt:         timestamppb.New(txResult.User.CreatedAt),
 	}
 
 	return res, nil
