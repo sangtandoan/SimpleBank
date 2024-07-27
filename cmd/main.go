@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/FrostJ143/simplebank/internal/gapi"
 	"github.com/FrostJ143/simplebank/internal/query"
 	"github.com/FrostJ143/simplebank/internal/utils"
+	"github.com/FrostJ143/simplebank/internal/worker"
 	"github.com/FrostJ143/simplebank/pb"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -42,12 +44,19 @@ func main() {
 		log.Fatal().Msgf("Could not connect to database: %s", err)
 	}
 
+	redisOpt := asynq.RedisClientOpt{
+		Addr: config.RedisServerAddress,
+	}
+
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+
 	// run db migration
 	runDBMigration(config.MigrationURL, config.DBSource)
 
 	store := query.NewSQLStore(conn)
-	go runGatewayServer(store, config)
-	runGRPCServer(store, config)
+	go runTaskProcessor(redisOpt, store)
+	go runGatewayServer(store, config, taskDistributor)
+	runGRPCServer(store, config, taskDistributor)
 }
 
 func runDBMigration(migrationURL string, DBSource string) {
@@ -64,8 +73,18 @@ func runDBMigration(migrationURL string, DBSource string) {
 	log.Info().Msg("migrated successfully")
 }
 
-func runGRPCServer(store query.Store, config utils.Config) {
-	serverHandler, err := gapi.NewServer(store, config)
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store query.Store) {
+	processor := worker.NewRedisTaskProcessor(redisOpt, store)
+
+	log.Info().Msg("start task processor")
+	err := processor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start task processor")
+	}
+}
+
+func runGRPCServer(store query.Store, config utils.Config, taskDistributor worker.TaskDistributor) {
+	serverHandler, err := gapi.NewServer(store, config, taskDistributor)
 	if err != nil {
 		log.Fatal().Msgf("cannot create server handler: %s", err)
 	}
@@ -87,8 +106,8 @@ func runGRPCServer(store query.Store, config utils.Config) {
 	}
 }
 
-func runGatewayServer(store query.Store, config utils.Config) {
-	serverHandler, err := gapi.NewServer(store, config)
+func runGatewayServer(store query.Store, config utils.Config, taskDistributor worker.TaskDistributor) {
+	serverHandler, err := gapi.NewServer(store, config, taskDistributor)
 	if err != nil {
 		log.Fatal().Msgf("cannot create server handler: %s", err)
 	}
@@ -111,8 +130,8 @@ func runGatewayServer(store query.Store, config utils.Config) {
 		log.Fatal().Msgf("cannot register server handler to gateway")
 	}
 
-	serverMux := http.NewServeMux()
-	serverMux.Handle("/", grpcMux)
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/", grpcMux)
 
 	// Remember that Go is a compiled language; most everything the program does happens at runtime.
 	// In particular, in this case, the call to http.Dir() happens at runtime, and that means that the path is evaluated at runtime.
@@ -133,7 +152,7 @@ func runGatewayServer(store query.Store, config utils.Config) {
 		log.Fatal().Msgf("cannot create statik fs: %s", err)
 	}
 	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
-	serverMux.Handle("/swagger/", swaggerHandler)
+	serveMux.Handle("/swagger/", swaggerHandler)
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
@@ -141,7 +160,7 @@ func runGatewayServer(store query.Store, config utils.Config) {
 	}
 
 	log.Info().Msgf("start gRPC gateway server at %s", config.HTTPServerAddress)
-	handler := gapi.HttpLogger(serverMux)
+	handler := gapi.HttpLogger(serveMux)
 	err = http.Serve(listener, handler)
 	if err != nil {
 		log.Fatal().Msgf("cannot start HTTP server gateway: %s", err)
